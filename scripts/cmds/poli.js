@@ -1,5 +1,5 @@
 const axios = require('axios');
-const fs = require('fs-extra');
+const fs = require('fs-extra'); // fs-extra ব্যবহার করা হচ্ছে
 
 module.exports = {
   config: {
@@ -17,9 +17,16 @@ module.exports = {
     api.sendMessage("⏳ Generating image, please wait...", threadID, async (err, info) => {
       if (err) return console.error(err);
 
-      let path = __dirname + `/cache/poli_${Date.now()}.png`;
+      // ফোল্ডার পথ সেট করা হচ্ছে
+      const cacheDir = __dirname + "/cache";
+      const imagePath = `${cacheDir}/poli_${Date.now()}.png`;
 
       try {
+        // চেক করুন যে ফোল্ডারটি আছে কি না, না থাকলে তৈরি করুন
+        if (!fs.existsSync(cacheDir)) {
+          await fs.mkdir(cacheDir, { recursive: true });
+        }
+
         // API কল করা হচ্ছে
         const response = await axios.get(`https://kaiz-apis.gleeze.com/api/poli`, {
           params: { prompt: query }, // প্রম্পট পাঠানো হচ্ছে
@@ -27,14 +34,14 @@ module.exports = {
         });
 
         // ইমেজ ফাইল হিসেবে সেভ করা হচ্ছে
-        fs.writeFileSync(path, Buffer.from(response.data, "binary"));
+        await fs.writeFile(imagePath, Buffer.from(response.data, "binary"));
 
         // ইউজারকে ইমেজ পাঠানো হচ্ছে
         api.sendMessage({
           body: "✅ Here's your generated image!",
-          attachment: fs.createReadStream(path)
+          attachment: fs.createReadStream(imagePath)
         }, threadID, () => {
-          fs.unlinkSync(path); // ইমেজ পাঠানোর পর ফাইল ডিলিট করে দেওয়া হবে
+          fs.unlinkSync(imagePath); // ইমেজ পাঠানোর পর ফাইল ডিলিট করে দেওয়া হবে
         }, messageID);
 
       } catch (error) {
