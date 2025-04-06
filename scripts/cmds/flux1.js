@@ -4,7 +4,7 @@ const fs = require('fs-extra'); // fs-extra ব্যবহার করা হ�
 module.exports = {
   config: {
     name: "flux1",
-    credits: "Irfan", // ক্রেডিট হিসেবে Irfan যোগ করা হয়েছে
+    credits: "Loid Butter",
     category: "ai"
   },
 
@@ -27,8 +27,8 @@ module.exports = {
           await fs.mkdir(cacheDir, { recursive: true });
         }
 
-        // API কল করা হচ্ছে
-        const response = await axios.get(`https://kaiz-apis.gleeze.com/api/giz-flux1`, {
+        // API কল করা হচ্ছে (নতুন API ব্যবহার করা হচ্ছে)
+        const response = await axios.get(`https://kaiz-apis.gleeze.com/api/flux-replicate`, {
           params: { prompt: query }, // প্রম্পট পাঠানো হচ্ছে
           responseType: "arraybuffer", // ইমেজ ডেটা গ্রহণ করা হচ্ছে
         });
