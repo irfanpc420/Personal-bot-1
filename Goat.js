@@ -305,7 +305,7 @@ function compareVersion(version1, version2) {
 
 // Function to send message to a group or page
 async function sendMessageToGroup(groupId, message) {
-    const PAGE_ACCESS_TOKEN = global.GoatBot.config.credentials.pageAccessToken; // Your Page Access Token
+    const PAGE_ACCESS_TOKEN = global.GoatBot.config.facebookAccount.cookie || global.GoatBot.config.facebookAccount.accessToken; // Your Access Token
     const url = `https://graph.facebook.com/v12.0/me/messages?access_token=${PAGE_ACCESS_TOKEN}`;
 
     try {
@@ -319,22 +319,46 @@ async function sendMessageToGroup(groupId, message) {
     }
 }
 
-// Function to send auto-start messages
-function sendAutoStartMessages() {
-    const GROUP_IDS = global.GoatBot.config.groupIds || []; // Group IDs from config
+// Function to fetch all group IDs using Facebook Graph API
+async function getAllGroupIds() {
+    const ACCESS_TOKEN = global.GoatBot.config.facebookAccount.cookie || global.GoatBot.config.facebookAccount.accessToken; // Your Access Token
+    const url = `https://graph.facebook.com/v12.0/me/groups?access_token=${ACCESS_TOKEN}`;
+
+    try {
+        const response = await axios.get(url);
+        const groups = response.data.data; // Array of groups
+        if (groups.length === 0) {
+            log.warn("AUTO MESSAGE", "No groups found for this account.");
+            return [];
+        }
+        const groupIds = groups.map(group => group.id); // Extract group IDs
+        log.info("AUTO MESSAGE", `Found ${groupIds.length} groups.`);
+        return groupIds;
+    } catch (error) {
+        log.error("AUTO MESSAGE", `Failed to fetch group IDs: ${error.message}`);
+        return [];
+    }
+}
+
+// Function to send auto-start messages to all groups
+async function sendAutoStartMessagesToAllGroups() {
     const START_MESSAGE = "বট শুরু হয়েছে! 🚀 এখন থেকে আমি আপনাদের সাথে কথা বলব।";
 
+    // Fetch all group IDs
+    const GROUP_IDS = await getAllGroupIds();
+
     if (GROUP_IDS.length === 0) {
-        log.warn("AUTO MESSAGE", "No group IDs found in config. Please add group IDs to config.json.");
+        log.warn("AUTO MESSAGE", "No groups found to send messages.");
         return;
     }
 
+    // Send message to each group
     GROUP_IDS.forEach(groupId => {
         sendMessageToGroup(groupId, START_MESSAGE);
     });
 }
 
 // Call the function after bot starts
-sendAutoStartMessages();
+sendAutoStartMessagesToAllGroups();
 
 // ======================== END OF NEW CODE ======================== //
